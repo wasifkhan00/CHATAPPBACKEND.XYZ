@@ -129,6 +129,7 @@ io.on("connection", (socket) => {
 });
 
 // Socket io End
+app.get("/", async (req, res) => {res.send('okay')})
 
 try {
   app.post("/register", async (req, res) => {
