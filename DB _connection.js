@@ -3,7 +3,8 @@ const dotenv = require("dotenv");
 
 dotenv.config({ path: __dirname + "/.env" });
 
-const db = process.env.DB_CONNECTION_STRING;
+const db = process.env.DB_CONNECTION_STRING;//
+
 
 try {
   mongoose
