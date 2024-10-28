@@ -9,7 +9,10 @@ const http = require("http");
 const server = http.createServer(app);
 const cors = require("cors");
 
+
+
 app.use(express.json());
+app.use(cors({ origin: 'https://communicado.netlify.app' }));
 app.use(cors());
 app.use(auth);
 
