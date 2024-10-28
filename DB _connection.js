@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 dotenv.config({ path: __dirname + "/.env" });
 
 const db = process.env.DB_CONNECTION_STRING;//
-// const db = `mongodb+srv://wasif:wasif9900@cluster0.pcytu.mongodb.net/chatappDatas`;
+
 
 try {
   mongoose
