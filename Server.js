@@ -6,7 +6,7 @@ const ServersPORT = process.env.PORT || 3007;
 const { Server } = require("socket.io");
 const app = express();
 const http = require("http");
-const SocketServer = http.createServer(app);
+const server = http.createServer(app);
 const cors = require("cors");
 
 app.use(express.json());
@@ -45,7 +45,7 @@ groupsD.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 groupsMessage.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 
 // Socket io
-const io = new Server(SocketServer, {
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
