@@ -2,12 +2,11 @@ const express = require("express");
 const InsertingData = require("./DB _connection");
 const auth = require("./auth");
 const mongoose = require("mongoose");
-const PORT = process.env.PORT || 443;
-const SocketPORT = process.env.PORT || 3007;
+const ServersPORT = process.env.PORT || 3007;
 const { Server } = require("socket.io");
 const app = express();
 const http = require("http");
-const server = http.createServer(app);
+const SocketServer = http.createServer(app);
 const cors = require("cors");
 
 app.use(express.json());
@@ -46,7 +45,7 @@ groupsD.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 groupsMessage.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 
 // Socket io
-const io = new Server(server, {
+const io = new Server(SocketServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -430,6 +429,6 @@ try {
   throw Error(error.message);
 }
 
-server.listen(PORT, () => {
-  console.log(`Your Server & Socket is Running on ${PORT}`);
+server.listen(ServersPORT, () => {
+  console.log(`Your Server & Socket is Running on ${ServersPORT}`);
 });
