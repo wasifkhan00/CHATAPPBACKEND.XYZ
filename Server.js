@@ -2,11 +2,11 @@ const express = require("express");
 const InsertingData = require("./DB _connection");
 const auth = require("./auth");
 const mongoose = require("mongoose");
-const ServersPORT = process.env.PORT || 3007;
+const SocketPORT = process.env.PORT || 3010;
 const { Server } = require("socket.io");
 const app = express();
 const http = require("http");
-const server = http.createServer(app);
+const Socketserver = http.createServer(app);
 const cors = require("cors");
 
 
@@ -48,7 +48,7 @@ groupsD.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 groupsMessage.remove({ _id: { $oid: `${process.env.DB_IDS}` } });
 
 // Socket io
-const io = new Server(server, {
+const io = new Server(Socketserver, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -56,6 +56,7 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
+  console.log('Socket Connection Receieved')
   socket.on("checkGroupUniqueFromDBViaAccountNo", (data) => {
     groupsD.find({ accountNos: data }, (err, docs) => {
       if (err) {
@@ -432,6 +433,6 @@ try {
   throw Error(error.message);
 }
 
-server.listen(ServersPORT, () => {
-  console.log(`Your Server & Socket is Running on ${ServersPORT}`);
+Socketserver.listen(SocketPORT, () => {
+  console.log(`Your Server & Socket is Running on ${SocketPORT}`);
 });
