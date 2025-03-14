@@ -17,8 +17,8 @@ dotenv.config({ path: __dirname + "/.env" });
 
  const dbConnectionURI = process.env.DB_CONNECTION_STRING;//
 app.use(cors());
-// app.use(cors({ origin: 'https://communicado.netlify.app' }));
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: 'https://communicado.netlify.app' }));
+// app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use(auth);
 app.all("*", endpoints);
