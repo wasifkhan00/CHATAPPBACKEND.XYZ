@@ -5,7 +5,8 @@
   "main": "Server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon Server.js"
+    "start": "nodemon Server.js",
+    "dev": "supervisor Server.js"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,9 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "mongoose": "^6.6.7",
-    "nodemon": "^2.0.20",
     "socket.io": "^4.5.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
   }
 }
