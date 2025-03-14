@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for chatappbackend-xyz-dcyvaq on 2025-03-14T15:38:00Z
+# fly.toml app configuration file generated for chatappbackend-xyz on 2025-03-14T15:52:44Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'chatappbackend-xyz-dcyvaq'
+app = 'chatappbackend-xyz'
 primary_region = 'sin'
 
 [build]
