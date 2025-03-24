@@ -64,116 +64,96 @@ class Controller {
   // userCreatedNewGroup
 
   // fetch group
-  async fetchGroupData(req, res) {
-    const { userAccountNo } = req.body;
+  async fetchGroupData(req, res, next) {
+    try {
+      const fetchingGroupDetails = await repository.fetchGroupDataFromDB(
+        req.body
+      );
 
-    groupsD.find({ accountNos: userAccountNo }, { _id: 0 }, (err, docs) => {
-      if (err) {
-        throw Error(err.message);
+      if (fetchingGroupDetails === "Account number not found") {
+        return res.status(HttpStatusCodes.OK).send("Account number not found");
       } else {
-        if (docs.length > 0) {
-          res.send(docs);
-        } else {
-          res.send("Couldnt FInd the group info");
-        }
+        return res.status(HttpStatusCodes.OK).send(fetchingGroupDetails);
       }
-    });
-  }
-  catch(error) {
-    throw Error(error.message);
+    } catch (error) {
+      next(error);
+    }
   }
   // fetch group
 
   //   checkAlreadyExistingGroup
-  async checkAlreadyExistingGroup(req, res) {
+  async checkAlreadyExistingGroup(req, res, next) {
     try {
-      groupsD.find({}, (err, docs) => {
-        if (err) {
-          throw Error(err.message);
-        } else {
-          if (docs.length > 0) {
-            res.send(docs);
-          } else {
-            res.send("There are no groups Created yet");
-          }
-        }
-      });
+      const fetchingGroups = await repository.fetchExistingGroups();
+
+      if (fetchingGroups === "No groups found") {
+        return res
+          .status(HttpStatusCodes.OK)
+          .send("There are no groups Created yet");
+      } else {
+        return res.status(HttpStatusCodes.OK).send(fetchingGroups);
+      }
     } catch (error) {
-      throw Error(error.message);
+      next(error);
     }
   }
   // checkAlreadyExistingGroup/
 
   // checkAlreadyExistingGroupmembers/
 
-  async fetchAlreadyExistingGroupMembers(req, res) {
+  async fetchAlreadyExistingGroupMembers(req, res, next) {
     const { groupMembersInputValue } = req.body;
-    try {
-      if (groupMembersInputValue !== "") {
-        InsertingData.find(
-          { accounts: { $regex: groupMembersInputValue } },
-          (err, docs) => {
-            if (err) {
-              throw Error(err.message);
-            } else {
-              if (docs.length > 0) {
-                res.send(docs);
-              } else {
-                res.send("Account doesn't exists");
-              }
-            }
-          }
+
+    if (groupMembersInputValue !== "") {
+      try {
+        const checkGroupMembers = await repository.checkForExistingGroupMembers(
+          req.body
         );
-      } else {
-        res.sendStatus(404);
+        return res.status(HttpStatusCodes.OK).send(checkGroupMembers);
+      } catch (error) {
+        next(error);
       }
-    } catch (error) {
-      throw Error(error.message);
+    } else {
+      res.sendStatus(HttpStatusCodes.NOT_FOUND);
     }
   }
 
   // checkAlreadyExistingGroupmembers/
 
-  async updateGroupMembers(req, res) {
-    const { uniqueGroupKey, members, accountNo } = req.body;
-    try {
-      if (uniqueGroupKey !== "") {
-        const result = await groupsD.updateMany(
-          { uniqueGroupKeys: uniqueGroupKey },
-          {
-            $set: {
-              member: members,
-            },
-          }
+  async updateGroupMembers(req, res, next) {
+    const { uniqueGroupKey } = req.body;
+
+    if (uniqueGroupKey !== "") {
+      try {
+        const updateMembers = await repository.updateAndInsertGroupMember(
+          req.body
         );
+        return res.status(HttpStatusCodes.OK).send(`Updated`);
+      } catch (error) {
+        next(error);
       }
-    } catch (error) {
-      throw Error(error.message);
     }
   }
   // checkAlreadyExistingGroupmembers/
 
   // updateExistingGroupName/
 
-  async updateExistingGroupName(req, res) {
-    const { uniqueGroupKey, groupNames } = req.body;
-    try {
-      if (uniqueGroupKey !== "") {
-        const result = await groupsD.updateMany(
-          { uniqueGroupKeys: uniqueGroupKey },
-          {
-            $set: {
-              groupNames: groupNames,
-            },
-          }
-        );
+  async updateExistingGroupName(req, res, next) {
+    const { uniqueGroupKey } = req.body;
+
+    if (uniqueGroupKey !== "") {
+      try {
+        const updateMyGroupName = await repository.updateGroupName(req.body);
+
+        res.status(HttpStatusCodes.OK).send(`Updated`);
+      } catch (error) {
+        next(error);
       }
-    } catch (error) {
-      throw Error(error.message);
     }
   }
 
   // updateExistingGroupName/
+  // starting from here pluys deploying it and connecting frotnend with it apart from this reducing redundant or same data deposit in the db
 
   //   leave group
   async existingMemberLeftGroup(req, res) {
@@ -258,22 +238,27 @@ class Controller {
 
   async fetchMessages(req, res) {
     const { uniqueGroupKey } = req.body;
+    console.log("fetch Messages hit");
+
     try {
-      groupsMessage.find({ groupKey: uniqueGroupKey }, (err, docs) => {
-        if (err) {
-          throw Error(err.message);
-        } else {
-          if (docs.length > 0) {
-            res.send(docs);
-          } else {
-            res.sendStatus(404);
-          }
-        }
-      });
+      // Use await without passing a callback, which ensures that it returns a promise
+      const docs = await groupsMessage
+        .find({ groupKey: uniqueGroupKey })
+        .exec();
+
+      if (docs.length > 0) {
+        console.log("fetch Messages fetched");
+        res.send(docs);
+      } else {
+        console.log("fetch Messages not found");
+        res.sendStatus(404);
+      }
     } catch (error) {
-      throw Error(error.message);
+      console.error("Error fetching messages:", error.message);
+      res.sendStatus(500);
     }
   }
+
   // Fetch Messages
 
   // Reserve Unknown Routes

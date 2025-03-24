@@ -91,11 +91,87 @@ class Repository {
 
   // user group created
 
+  // fetching group data for login
+  async fetchGroupDataFromDB({ userAccountNo }) {
+    try {
+      const docs = await groupsD.find({ accountNos: userAccountNo }).exec();
+      if (docs.length > 0) {
+        return docs;
+      } else {
+        return "Account number not found";
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 
+  // fetching group data for login
+  async fetchExistingGroups() {
+    try {
+      const docs = await groupsD.find({}).exec();
+      if (docs.length > 0) {
+        return docs;
+      } else {
+        return "No groups found";
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+  // fetching group data for check For Existing Group Members
 
+  async checkForExistingGroupMembers({ groupMembersInputValue }) {
+    try {
+      const docs = await InsertingData.find({
+        accounts: { $regex: groupMembersInputValue },
+      }).exec();
 
+      if (docs.length > 0) {
+        return docs;
+      } else {
+        return "Account doesn't exists";
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+  // fetching group data for check For Existing Group Members
 
-  
+  // updating groupmembers data
+
+  async updateAndInsertGroupMember({ uniqueGroupKey, members, accountNo }) {
+    try {
+      const updatingGroupMembers = await groupsD.updateMany(
+        { uniqueGroupKeys: uniqueGroupKey },
+        {
+          $set: {
+            member: members,
+          },
+        }
+      );
+
+      return updatingGroupMembers;
+    } catch (error) {
+      throw error;
+    }
+  }
+  // updating groupmembers data
+
+  async updateGroupName({ uniqueGroupKey, groupNames }) {
+    try {
+      const result = await groupsD.updateMany(
+        { uniqueGroupKeys: uniqueGroupKey },
+        {
+          $set: {
+            groupNames: groupNames,
+          },
+        }
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new Repository(InsertingData, groupsMessage, groupsD);
