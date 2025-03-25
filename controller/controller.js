@@ -153,51 +153,15 @@ class Controller {
   }
 
   // updateExistingGroupName/
+  
   // starting from here pluys deploying it and connecting frotnend with it apart from this reducing redundant or same data deposit in the db
-
   //   leave group
-  async existingMemberLeftGroup(req, res) {
-    const { groupKey, userAccountNo } = req.body;
+  async existingMemberLeftGroup(req, res,next) {
     try {
-      groupsD.find({ uniqueGroupKeys: groupKey }, { _id: 0 }, (err, docs) => {
-        if (err) {
-          throw Error(err.message);
-        } else {
-          if (docs.length > 0) {
-            docs.map(async (users) => {
-              if (users.accountNos === userAccountNo) {
-                groupsD
-                  .deleteOne({ accountNos: userAccountNo })
-                  .then(() => {
-                    res.send({
-                      userAccountNo: userAccountNo,
-                      message: `User left`,
-                      groupKey: groupKey,
-                    });
-                  })
-                  .catch((error) => {
-                    throw Error(error.message);
-                  });
-              }
-
-              if (users.uniqueGroupKeys === groupKey) {
-                const result = await groupsD.updateMany(
-                  { uniqueGroupKeys: groupKey },
-                  {
-                    $pull: {
-                      member: userAccountNo,
-                    },
-                  }
-                );
-              }
-            });
-          } else {
-            res.send("Couldnt FInd the group info");
-          }
-        }
-      });
+    const leavingGroup = await repository.userLeftGroup(req.body);
+    res.send(leavingGroup);
     } catch (error) {
-      throw Error(error.message);
+      next(error);
     }
   }
 
