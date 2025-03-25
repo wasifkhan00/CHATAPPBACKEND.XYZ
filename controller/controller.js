@@ -153,73 +153,49 @@ class Controller {
   }
 
   // updateExistingGroupName/
-  
-  // starting from here pluys deploying it and connecting frotnend with it apart from this reducing redundant or same data deposit in the db
+
   //   leave group
-  async existingMemberLeftGroup(req, res,next) {
+  async existingMemberLeftGroup(req, res, next) {
     try {
-    const leavingGroup = await repository.userLeftGroup(req.body);
-    res.send(leavingGroup);
+      const leavingGroup = await repository.userLeftGroup(req.body);
+      res.status(HttpStatusCodes.OK).send(leavingGroup);
+    } catch (error) {
+      next(error);
+    }
+  }
+  //   leave group
+
+  //groupDeletion
+
+  async deleteGroupPermanently(req, res, next) {
+    try {
+      const deleteGroup = await repository.deleteGroupPermanently(req.body);
+
+      if (deleteGroup === "Group Deleted Permanently") {
+        return res.status(HttpStatusCodes.OK).send("Group Deleted Permanently");
+      } else {
+        return res.status(HttpStatusCodes.NOT_FOUND).send("Group not found");
+      }
     } catch (error) {
       next(error);
     }
   }
 
-  //   leave group
-
-  //groupDeletion
-
-  async deleteGroupPermanently(req, res) {
-    const { groupKey, isAdmin } = req.body;
-    try {
-      groupsD.deleteMany({ uniqueGroupKeys: groupKey }, (err, docs) => {
-        if (err) {
-          throw Error(err.message);
-        } else {
-          if (docs) {
-            res.send("group Deleted");
-
-            groupsMessage.deleteMany({ groupKey: groupKey }, (err, docs) => {
-              if (err) {
-                throw Error(err.message);
-              } else {
-                if (docs) {
-                  console.log("User Successfully Deleted the Group");
-                }
-              }
-            });
-          }
-        }
-      });
-    } catch (error) {
-      throw Error(error.message);
-    }
-  }
-
   //groupDeletion
 
   // Fetch Messages
 
-  async fetchMessages(req, res) {
-    const { uniqueGroupKey } = req.body;
-    console.log("fetch Messages hit");
-
+  async fetchMessages(req, res, next) {
     try {
-      // Use await without passing a callback, which ensures that it returns a promise
-      const docs = await groupsMessage
-        .find({ groupKey: uniqueGroupKey })
-        .exec();
+      const fetchedMessages = await repository.fetchExistingMessages(req.body);
 
-      if (docs.length > 0) {
-        console.log("fetch Messages fetched");
-        res.send(docs);
+      if (fetchedMessages.length > 0) {
+        res.status(HttpStatusCodes.OK).send(docs);
       } else {
-        console.log("fetch Messages not found");
-        res.sendStatus(404);
+        res.status(HttpStatusCodes.NOT_FOUND).send("No messages found");
       }
     } catch (error) {
-      console.error("Error fetching messages:", error.message);
-      res.sendStatus(500);
+      next(error);
     }
   }
 
@@ -227,25 +203,26 @@ class Controller {
 
   // Reserve Unknown Routes
 
-  async reserveUnknownRoutes(req, res) {
-    const { userAccountNo } = req.body;
+  async reserveUnknownRoutes(req, res, next) {
     try {
-      groupsD.find({ accountNos: userAccountNo }, { _id: 0 }, (err, docs) => {
-        if (err) {
-          throw Error(err.message);
-        } else {
-          if (docs.length > 0) {
-            res.send(docs);
-          } else {
-            res.send("Couldnt FInd the group info");
-          }
-        }
-      });
+      const unknownReq = await repository.unknowReserve(req.body);
+
+      if (unknownReq > 0) {
+        res.status(HttpStatusCodes.OK).send(unknownReq);
+      } else {
+        res.status(HttpStatusCodes.NOT_FOUND).send("Account number not found");
+      }
     } catch (error) {
-      throw Error(error.message);
+      next(error);
     }
   }
 
   // Reserve Unknown Routes
+
+  
+  // starting from here pluys deploying it and connecting frotnend with it apart from this reducing redundant or same data deposit in the db
+  // Okay so there is a problem when you add someone to the group again the person who is added his member array are updated meaning both of the 2 members are there present
+  // but the person who added it i mean the admin his member array doesnt get updated
+  // Apart from this changing variable names and making the code more readable and understandable
 }
 module.exports = new Controller(InsertingData, groupsMessage, groupsD);

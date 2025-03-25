@@ -173,8 +173,8 @@ class Repository {
       throw error;
     }
   }
-  
-// User Left group
+
+  // User Left group
   async userLeftGroup({ groupKey, userAccountNo }) {
     try {
       // Find groups matching the groupKey
@@ -207,6 +207,53 @@ class Repository {
             );
           }
         }
+      } else {
+        return "Account number not found";
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+  // User Left group
+
+  // deleteGroupPermanently
+
+  async adminDeleteGroup({ groupKey }) {
+    const docs = await groupsD.deleteMany({ uniqueGroupKeys: groupKey });
+
+    try {
+      if (docs) {
+        const deleteGroupMessages = await groupsMessage.deleteMany({
+          groupKey: groupKey,
+        });
+
+        if (docs && deleteGroupMessages) {
+          return "Group Deleted Permanently";
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async fetchExistingMessages({ uniqueGroupKey }) {
+    try {
+      const docs = await groupsMessage
+        .find({ groupKey: uniqueGroupKey })
+        .exec();
+
+      return docs;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async unknowReserve({ userAccountNo }) {
+    try {
+      const docs = await groupsD.find({ accountNos: userAccountNo }).exec();
+
+      if (docs.length > 0) {
+        return docs;
       } else {
         return "Account number not found";
       }
