@@ -157,6 +157,7 @@ class Repository {
   }
   // updating groupmembers data
 
+  // update group name
   async updateGroupName({ uniqueGroupKey, groupNames }) {
     try {
       const result = await groupsD.updateMany(
@@ -168,6 +169,47 @@ class Repository {
         }
       );
       return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+// User Left group
+  async userLeftGroup({ groupKey, userAccountNo }) {
+    try {
+      // Find groups matching the groupKey
+      const docs = await groupsD
+        .find({ uniqueGroupKeys: groupKey }, { _id: 0 })
+        .exec();
+
+      if (docs.length > 0) {
+        for (const users of docs) {
+          // If the user's account number matches, delete the user
+          if (users.accountNos === userAccountNo) {
+            const red = await groupsD.deleteOne({ accountNos: userAccountNo });
+
+            return {
+              userAccountNo,
+              message: `User left`,
+              groupKey,
+            };
+          }
+
+          // Remove the user from the member array if groupKey matches
+          if (users.uniqueGroupKeys === groupKey) {
+            const updateGroupMembersArray = await groupsD.updateMany(
+              { uniqueGroupKeys: groupKey },
+              {
+                $pull: {
+                  member: userAccountNo,
+                },
+              }
+            );
+          }
+        }
+      } else {
+        return "Account number not found";
+      }
     } catch (error) {
       throw error;
     }
