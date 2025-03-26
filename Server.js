@@ -15,10 +15,9 @@ const colors = require("./helpers/colorCodes");
 
 dotenv.config({ path: __dirname + "/.env" });
 
-// const dbConnectionURI = process.env.DB_CONNECTION_STRING;//
-const dbConnectionURI = `mongodb+srv://wasif:wasif9900@cluster0.pcytu.mongodb.net/chatappDatas`; //
+const dbConnectionURI = process.env.DB_CONNECTION_STRING;//
 app.use(cors());
-// app.use(cors({ origin: 'https://communicado.netlify.app' }));
+app.use(cors({ origin: 'https://snaptext.netlify.app/' }));
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use(auth);
