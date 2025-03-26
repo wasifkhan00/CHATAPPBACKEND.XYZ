@@ -6,6 +6,6 @@ let chatAppSchema = new mongoose.Schema({
   passwords: { type: String, required: true, select: false },
 });
 
-const InsertingData = new mongoose.model("registerations", chatAppSchema, "registerations");
+const userRegisteration = new mongoose.model("registerations", chatAppSchema, "registerations");
 
-module.exports = InsertingData;
+module.exports = userRegisteration;
