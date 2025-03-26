@@ -3,13 +3,14 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
+
 app = 'snap-text-backend'
 primary_region = 'sin'
 
 [build]
 
 [http_service]
-  internal_port = 3000
+  internal_port = 3008
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
