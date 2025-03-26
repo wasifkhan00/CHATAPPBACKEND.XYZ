@@ -190,7 +190,7 @@ class Controller {
       const fetchedMessages = await repository.fetchExistingMessages(req.body);
 
       if (fetchedMessages.length > 0) {
-        res.status(HttpStatusCodes.OK).send(docs);
+        res.status(HttpStatusCodes.OK).send(fetchedMessages);
       } else {
         res.status(HttpStatusCodes.NOT_FOUND).send("No messages found");
       }
