@@ -219,10 +219,5 @@ class Controller {
 
   // Reserve Unknown Routes
 
-  
-  // starting from here pluys deploying it and connecting frotnend with it apart from this reducing redundant or same data deposit in the db
-  // Okay so there is a problem when you add someone to the group again the person who is added his member array are updated meaning both of the 2 members are there present
-  // but the person who added it i mean the admin his member array doesnt get updated
-  // Apart from this changing variable names and making the code more readable and understandable
 }
 module.exports = new Controller(userRegisteration, groupsMessage, chatGroupInfo);
