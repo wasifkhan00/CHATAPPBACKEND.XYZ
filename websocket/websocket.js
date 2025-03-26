@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const groupsD = require("../model/groupDetails");
+const chatGroupInfo = require("../model/groupDetails");
 const groupsMessage = require("../model/message");
 
 const socketSetup = (server) => {
@@ -13,7 +13,7 @@ const socketSetup = (server) => {
   io.on("connection", (socket) => {
     socket.on("checkGroupUniqueFromDBViaAccountNo", async (data) => {
       try {
-        const docs = await groupsD.find({ accountNos: data }).exec();
+        const docs = await chatGroupInfo.find({ accountNos: data }).exec();
         if (docs.length > 0) {
           docs.forEach((users) => {
             socket.join(users.uniqueGroupKeys);

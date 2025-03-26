@@ -1,14 +1,14 @@
-const InsertingData = require("../model/Registeration");
-const groupsD = require("../model/groupDetails");
+const userRegisteration = require("../model/Registeration");
+const chatGroupInfo = require("../model/groupDetails");
 const groupsMessage = require("../model/message");
 const repository = require("../repository/repository");
 const HttpStatusCodes = require("../helpers/statusCodes");
 
 class Controller {
-  constructor(InsertingData, groupsMessage, groupsD) {
-    this.InsertingData = InsertingData;
+  constructor(userRegisteration, groupsMessage, chatGroupInfo) {
+    this.userRegisteration = userRegisteration;
     this.groupsMessage = groupsMessage;
-    this.groupsD = groupsD;
+    this.chatGroupInfo = chatGroupInfo;
   }
 
   async testGetRouteController(req, res, next) {
@@ -225,4 +225,4 @@ class Controller {
   // but the person who added it i mean the admin his member array doesnt get updated
   // Apart from this changing variable names and making the code more readable and understandable
 }
-module.exports = new Controller(InsertingData, groupsMessage, groupsD);
+module.exports = new Controller(userRegisteration, groupsMessage, chatGroupInfo);

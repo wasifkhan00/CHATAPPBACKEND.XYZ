@@ -1,17 +1,17 @@
-const InsertingData = require("../model/Registeration");
-const groupsD = require("../model/groupDetails");
+const userRegisteration = require("../model/Registeration");
+const chatGroupInfo = require("../model/groupDetails");
 const groupsMessage = require("../model/message");
 
 class Repository {
-  constructor(InsertingData, groupsMessage, groupsD) {
-    this.InsertingData = InsertingData;
+  constructor(userRegisteration, groupsMessage, chatGroupInfo) {
+    this.userRegisteration = userRegisteration;
     this.groupsMessage = groupsMessage;
-    this.groupsD = groupsD;
+    this.chatGroupInfo = chatGroupInfo;
   }
   // registeration
   async registerUser({ name, account, password }) {
     try {
-      const docs = await InsertingData.find({
+      const docs = await userRegisteration.find({
         accounts: account,
         passwords: password,
       })
@@ -19,7 +19,7 @@ class Repository {
         .exec();
 
       if (!docs.length > 0) {
-        const dataToDB = new InsertingData({
+        const dataToDB = new userRegisteration({
           names: name,
           accounts: account,
           passwords: password,
@@ -40,7 +40,7 @@ class Repository {
   // login Auth
   async authorizeUser({ account, password }) {
     try {
-      const docs = await InsertingData.find({
+      const docs = await userRegisteration.find({
         accounts: account,
         passwords: password,
       })
@@ -68,10 +68,10 @@ class Repository {
     AddedBy,
   }) {
     try {
-      const docs = await groupsD.find({ accountNos: accountNo }).exec();
+      const docs = await chatGroupInfo.find({ accountNos: accountNo }).exec();
       // it means group already doesnt exist so we can create a new group
       if (!docs.length > 0) {
-        const groupDataToDB = new groupsD({
+        const groupDataToDB = new chatGroupInfo({
           accountNos: accountNo,
           uniqueGroupKeys: uniqueGroupKey,
           groupNames: groupName,
@@ -94,7 +94,7 @@ class Repository {
   // fetching group data for login
   async fetchGroupDataFromDB({ userAccountNo }) {
     try {
-      const docs = await groupsD.find({ accountNos: userAccountNo }).exec();
+      const docs = await chatGroupInfo.find({ accountNos: userAccountNo }).exec();
       if (docs.length > 0) {
         return docs;
       } else {
@@ -108,7 +108,7 @@ class Repository {
   // fetching group data for login
   async fetchExistingGroups() {
     try {
-      const docs = await groupsD.find({}).exec();
+      const docs = await chatGroupInfo.find({}).exec();
       if (docs.length > 0) {
         return docs;
       } else {
@@ -122,7 +122,7 @@ class Repository {
 
   async checkForExistingGroupMembers({ groupMembersInputValue }) {
     try {
-      const docs = await InsertingData.find({
+      const docs = await userRegisteration.find({
         accounts: { $regex: groupMembersInputValue },
       }).exec();
 
@@ -141,7 +141,7 @@ class Repository {
 
   async updateAndInsertGroupMember({ uniqueGroupKey, members, accountNo }) {
     try {
-      const updatingGroupMembers = await groupsD.updateMany(
+      const updatingGroupMembers = await chatGroupInfo.updateMany(
         { uniqueGroupKeys: uniqueGroupKey },
         {
           $set: {
@@ -160,7 +160,7 @@ class Repository {
   // update group name
   async updateGroupName({ uniqueGroupKey, groupNames }) {
     try {
-      const result = await groupsD.updateMany(
+      const result = await chatGroupInfo.updateMany(
         { uniqueGroupKeys: uniqueGroupKey },
         {
           $set: {
@@ -178,7 +178,7 @@ class Repository {
   async userLeftGroup({ groupKey, userAccountNo }) {
     try {
       // Find groups matching the groupKey
-      const docs = await groupsD
+      const docs = await chatGroupInfo
         .find({ uniqueGroupKeys: groupKey }, { _id: 0 })
         .exec();
 
@@ -186,7 +186,7 @@ class Repository {
         for (const users of docs) {
           // If the user's account number matches, delete the user
           if (users.accountNos === userAccountNo) {
-            const red = await groupsD.deleteOne({ accountNos: userAccountNo });
+            const red = await chatGroupInfo.deleteOne({ accountNos: userAccountNo });
 
             return {
               userAccountNo,
@@ -197,7 +197,7 @@ class Repository {
 
           // Remove the user from the member array if groupKey matches
           if (users.uniqueGroupKeys === groupKey) {
-            const updateGroupMembersArray = await groupsD.updateMany(
+            const updateGroupMembersArray = await chatGroupInfo.updateMany(
               { uniqueGroupKeys: groupKey },
               {
                 $pull: {
@@ -219,7 +219,7 @@ class Repository {
   // deleteGroupPermanently
 
   async adminDeleteGroup({ groupKey }) {
-    const docs = await groupsD.deleteMany({ uniqueGroupKeys: groupKey });
+    const docs = await chatGroupInfo.deleteMany({ uniqueGroupKeys: groupKey });
 
     try {
       if (docs) {
@@ -250,7 +250,7 @@ class Repository {
 
   async unknowReserve({ userAccountNo }) {
     try {
-      const docs = await groupsD.find({ accountNos: userAccountNo }).exec();
+      const docs = await chatGroupInfo.find({ accountNos: userAccountNo }).exec();
 
       if (docs.length > 0) {
         return docs;
@@ -263,4 +263,4 @@ class Repository {
   }
 }
 
-module.exports = new Repository(InsertingData, groupsMessage, groupsD);
+module.exports = new Repository(userRegisteration, groupsMessage, chatGroupInfo);
