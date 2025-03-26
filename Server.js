@@ -16,9 +16,14 @@ const colors = require("./helpers/colorCodes");
 dotenv.config({ path: __dirname + "/.env" });
 
 const dbConnectionURI = process.env.DB_CONNECTION_STRING;//
-app.use(cors());
-app.use(cors({ origin: 'https://snaptext.netlify.app/' }));
-// app.use(cors({ origin: "http://localhost:3000" }));
+const corsOptions = {
+  origin: "https://snaptext.netlify.app", 
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+  allowedHeaders: ["Content-Type", "Authorization"], 
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(auth);
 app.all("*", endpoints);
