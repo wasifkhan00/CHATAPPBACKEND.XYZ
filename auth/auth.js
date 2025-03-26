@@ -1,7 +1,6 @@
 const tokenKey = process.env.Token;//
 
 const auth = (req, res, next) => {
-  console.log('re received')
   try {
     let token = req.headers.authorization;
 
