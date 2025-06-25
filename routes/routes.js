@@ -1,21 +1,29 @@
 const express = require("express");
 const Controller = require("../controller/controller");
+const auth = require("../auth/auth");
 const router = express.Router();
 
 router.get("/", Controller.testGetRouteController);
-router.post("/register", Controller.userRegisteration);
+router.post("/register", Controller.RegisterUser);
 router.post("/login", Controller.loginAuthentication);
-router.post("/groupInformation", Controller.userCreatedNewGroup);
-router.post("/groupInformationz", Controller.fetchGroupData);
-router.get("/EveryGroupsData", Controller.checkAlreadyExistingGroup);
-router.post("/checkForGroupNames", Controller.fetchAlreadyExistingGroupMembers);
-router.put("/updateGroupMembersArray", Controller.updateGroupMembers);
-router.put("/updateGroupName", Controller.updateExistingGroupName);
-router.delete("/groupleaving", Controller.existingMemberLeftGroup);
-router.delete("/groupDeletion", Controller.deleteGroupPermanently);
-router.post("/fetchMessages", Controller.fetchMessages);
+router.post("/verifyOtp", Controller.verifyOtp);
+// auth
+router.post("/groupInformation", auth, Controller.userCreatedNewGroup);
+router.post("/groupInformationz", auth, Controller.fetchGroupData);
+router.get("/EveryGroupsData", auth, Controller.checkAlreadyExistingGroup);
+router.post(
+  "/checkForGroupNames",
+  auth,
+  Controller.fetchAlreadyExistingGroupMembers
+);
+router.put("/updateGroupMembersArray", auth, Controller.updateGroupMembers);
+router.put("/updateGroupName", auth, Controller.updateExistingGroupName);
+router.delete("/groupleaving", auth, Controller.existingMemberLeftGroup);
+router.delete("/groupDeletion", auth, Controller.deleteGroupPermanently);
+router.post("/fetchMessages", auth, Controller.fetchMessages);
 router.post(
   "/groupInformationForGroupMemberCheck",
+  auth,
   Controller.reserveUnknownRoutes
 );
 
