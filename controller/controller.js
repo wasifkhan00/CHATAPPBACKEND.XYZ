@@ -3,6 +3,12 @@ const chatGroupInfo = require("../model/groupDetails");
 const groupsMessage = require("../model/message");
 const repository = require("../repository/repository");
 const HttpStatusCodes = require("../helpers/statusCodes");
+const generateToken = require("../helpers/generateToken");
+const { sendOTPEmail } = require("../helpers/emailHelper");
+const generateOTP = require("../helpers/generateEmailOTP");
+const saveOtpToDB = require("../helpers/saveOtpToDb");
+const otpModel = require("../model/otpModel");
+const bcrypt = require("bcrypt");
 
 class Controller {
   constructor(userRegisteration, groupsMessage, chatGroupInfo) {
@@ -15,22 +21,79 @@ class Controller {
     res.send("okay");
   }
   // User Registeration
-  async userRegisteration(req, res, next) {
+  async RegisterUser(req, res, next) {
+    const { email } = req.body;
+
     try {
       const registering = await repository.registerUser(req.body);
 
-      res.status(HttpStatusCodes.OK).send(registering);
+      if (registering === "Account already exists") {
+        res.status(HttpStatusCodes.OK).send({
+          message: "Account already exists",
+          success: false,
+          email: email,
+        });
+      } else {
+        const otp = generateOTP();
 
-      // if (registering === "Account already exists") { //implementing it once the front end is fixed accordingly
-      //   res.status(HttpStatusCodes.OK).send(registering);
-      // } else {
-      //   res.status(HttpStatusCodes.CREATED).send(registering);
-      // }
+        const otpEmailSent = await sendOTPEmail(email, otp);
+
+        if (otpEmailSent.success) await saveOtpToDB(email, otp);
+
+        return res.status(HttpStatusCodes.OK).send({
+          message:
+            "An email with the 6 digit OTP has been sent to your email address.",
+          success: true,
+          email: email,
+        });
+      }
     } catch (error) {
       next(error);
     }
   }
-  //   User Registeration
+
+  async verifyOtp(req, res, next) {
+    try {
+      const { email, otp } = req.body;
+
+      const otpRecords = await otpModel
+        .findOne({ email })
+        .sort({ createdAt: -1 });
+
+      if (!otpRecords) {
+        return res
+          .status(400)
+          .send({ message: "OTP expired or not found Try Getting a new OTP." });
+      }
+
+      const isMatch = await bcrypt.compare(otp, otpRecords.otp);
+
+      if (!isMatch) return res.status(400).send({ message: "Invalid OTP." });
+
+      await userRegisteration.updateOne(
+        { emails: email },
+        { $set: { verifiedEmail: true } }
+      );
+
+      await otpModel.deleteMany({ email });
+
+      const user = await userRegisteration.findOne({ emails: email });
+
+      const token = generateToken({
+        email: user.emails,
+        userName: user.names,
+      });
+      return res.status(200).json({
+        message: "OTP verified successfully",
+        token: token,
+        success: true,
+        names: user.names,
+        emails: user.emails,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 
   //   login Auth
   async loginAuthentication(req, res, next) {
@@ -39,7 +102,19 @@ class Controller {
       if (authenticating === "Account no or Password not found") {
         res.status(HttpStatusCodes.OK).send("Account no or Password not found");
       } else {
-        res.status(HttpStatusCodes.OK).send(authenticating);
+        const token = generateToken({
+          emails: authenticating.emails,
+          userName: authenticating.UserName,
+        });
+
+        const responsePayload = {
+          emails: authenticating.emails,
+          names: authenticating.UserName,
+          success: true,
+          token: token,
+        };
+
+        res.status(HttpStatusCodes.OK).send(responsePayload);
       }
     } catch (error) {
       next(error);
@@ -53,9 +128,14 @@ class Controller {
     try {
       const creatingNewGroup = await repository.createNewGroup(req.body);
       if (creatingNewGroup === "Account number found") {
-        return res.status(HttpStatusCodes.OK).send("Account number found");
+        return res.status(HttpStatusCodes.OK).send({
+          message: "Account number found",
+          success: true,
+        });
       } else {
-        return res.status(HttpStatusCodes.OK).send("Account number not found");
+        return res
+          .status(HttpStatusCodes.OK)
+          .send({ message: "Account number not found", success: false });
       }
     } catch (error) {
       next(error);
@@ -63,11 +143,19 @@ class Controller {
   }
   // userCreatedNewGroup
 
-  // fetch group
+  // fetchgroup
   async fetchGroupData(req, res, next) {
+    const { emailAddress } = req.body;
+
+    if (!emailAddress || emailAddress === "") {
+      return res
+        .status(HttpStatusCodes.BAD_REQUEST)
+        .send("Email address is required");
+    }
+
     try {
       const fetchingGroupDetails = await repository.fetchGroupDataFromDB(
-        req.body
+        emailAddress
       );
 
       if (fetchingGroupDetails === "Account number not found") {
@@ -79,20 +167,28 @@ class Controller {
       next(error);
     }
   }
+
   // fetch group
 
   //   checkAlreadyExistingGroup
   async checkAlreadyExistingGroup(req, res, next) {
     try {
-      const fetchingGroups = await repository.fetchExistingGroups();
+      const groups = await repository.fetchExistingGroups();
 
-      if (fetchingGroups === "No groups found") {
-        return res
-          .status(HttpStatusCodes.OK)
-          .send("There are no groups Created yet");
-      } else {
-        return res.status(HttpStatusCodes.OK).send(fetchingGroups);
+      if (!groups || groups.length === 0) {
+        return res.status(HttpStatusCodes.OK).send({
+          success: false,
+          message: "There are no groups created yet",
+        });
       }
+
+      // Extract all account numbers from groups
+      const groupAccountNumbers = groups.map((group) => group.accountNos);
+
+      return res.status(HttpStatusCodes.OK).send({
+        success: true,
+        groupsCreatorUsers: groupAccountNumbers,
+      });
     } catch (error) {
       next(error);
     }
@@ -104,12 +200,25 @@ class Controller {
   async fetchAlreadyExistingGroupMembers(req, res, next) {
     const { groupMembersInputValue } = req.body;
 
-    if (groupMembersInputValue !== "") {
+    if (groupMembersInputValue !== "" && groupMembersInputValue) {
       try {
         const checkGroupMembers = await repository.checkForExistingGroupMembers(
           req.body
         );
-        return res.status(HttpStatusCodes.OK).send(checkGroupMembers);
+
+        if (checkGroupMembers === "Account doesn't exists") {
+          return res.status(HttpStatusCodes.OK).send({
+            success: false,
+            message: "Account doesn't exists",
+          });
+        }
+
+        const responsePayload = {
+          success: true,
+          groupCreators: checkGroupMembers,
+        };
+
+        return res.status(HttpStatusCodes.OK).send(responsePayload);
       } catch (error) {
         next(error);
       }
@@ -156,6 +265,8 @@ class Controller {
 
   //   leave group
   async existingMemberLeftGroup(req, res, next) {
+    console.log("existingMemberLeftGroup");
+    console.log(req.body);
     try {
       const leavingGroup = await repository.userLeftGroup(req.body);
       res.status(HttpStatusCodes.OK).send(leavingGroup);
@@ -169,12 +280,17 @@ class Controller {
 
   async deleteGroupPermanently(req, res, next) {
     try {
-      const deleteGroup = await repository.deleteGroupPermanently(req.body);
+      const deleteGroup = await repository.adminDeleteGroup(req.body);
 
       if (deleteGroup === "Group Deleted Permanently") {
-        return res.status(HttpStatusCodes.OK).send("Group Deleted Permanently");
+        return res
+          .status(HttpStatusCodes.OK)
+          .send({ message: "Group Deleted Permanently", success: true });
       } else {
-        return res.status(HttpStatusCodes.NOT_FOUND).send("Group not found");
+        return res.status(HttpStatusCodes.NOT_FOUND).send({
+          message: "Group not found",
+          success: false,
+        });
       }
     } catch (error) {
       next(error);
@@ -218,6 +334,9 @@ class Controller {
   }
 
   // Reserve Unknown Routes
-
 }
-module.exports = new Controller(userRegisteration, groupsMessage, chatGroupInfo);
+module.exports = new Controller(
+  userRegisteration,
+  groupsMessage,
+  chatGroupInfo
+);

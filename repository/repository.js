@@ -1,6 +1,7 @@
 const userRegisteration = require("../model/Registeration");
 const chatGroupInfo = require("../model/groupDetails");
 const groupsMessage = require("../model/message");
+const bcrypt = require("bcrypt");
 
 class Repository {
   constructor(userRegisteration, groupsMessage, chatGroupInfo) {
@@ -9,28 +10,26 @@ class Repository {
     this.chatGroupInfo = chatGroupInfo;
   }
   // registeration
-  async registerUser({ name, account, password }) {
+  async registerUser({ name, email, password }) {
     try {
-      const docs = await userRegisteration.find({
-        accounts: account,
-        passwords: password,
-      })
-        .select("-_id -__v")
+      const existingUser = await userRegisteration
+        .findOne({ emails: email })
+        .select("_id")
         .exec();
 
-      if (!docs.length > 0) {
-        const dataToDB = new userRegisteration({
-          names: name,
-          accounts: account,
-          passwords: password,
-        });
-
-        await dataToDB.save();
-
-        return `Account Successfully Registered`;
-      } else {
+      if (existingUser) {
         return "Account already exists";
       }
+
+      const dataToDB = new userRegisteration({
+        names: name,
+        emails: email,
+        passwords: password,
+      });
+
+      await dataToDB.save();
+
+      return `Account Successfully Registered`;
     } catch (error) {
       throw error;
     }
@@ -38,19 +37,21 @@ class Repository {
   // registeration
 
   // login Auth
-  async authorizeUser({ account, password }) {
+  async authorizeUser({ emails, password }) {
     try {
-      const docs = await userRegisteration.find({
-        accounts: account,
-        passwords: password,
-      })
-        .select("-_id -__v")
+      const user = await userRegisteration
+        .findOne({
+          emails: emails,
+        })
+        .select("+passwords -_id -__v")
         .exec();
-      if (docs.length > 0) {
-        return docs;
-      } else {
-        return "Account no or Password not found";
-      }
+      if (!user) return "Account no or Password not found";
+
+      const isMatch = await bcrypt.compare(password, user.passwords);
+
+      if (!isMatch) return "Account no or Password not found";
+
+      return { UserName: user.names, emails: user.emails };
     } catch (error) {
       throw error;
     }
@@ -60,7 +61,7 @@ class Repository {
   // user group created
 
   async createNewGroup({
-    accountNo,
+    email,
     uniqueGroupKey,
     groupName,
     isAdmin,
@@ -68,11 +69,11 @@ class Repository {
     AddedBy,
   }) {
     try {
-      const docs = await chatGroupInfo.find({ accountNos: accountNo }).exec();
+      const docs = await chatGroupInfo.find({ emails: email }).exec();
       // it means group already doesnt exist so we can create a new group
       if (!docs.length > 0) {
         const groupDataToDB = new chatGroupInfo({
-          accountNos: accountNo,
+          emails: email,
           uniqueGroupKeys: uniqueGroupKey,
           groupNames: groupName,
           isAdmin: isAdmin,
@@ -92,9 +93,10 @@ class Repository {
   // user group created
 
   // fetching group data for login
-  async fetchGroupDataFromDB({ userAccountNo }) {
+  async fetchGroupDataFromDB(emailAddress) {
     try {
-      const docs = await chatGroupInfo.find({ accountNos: userAccountNo }).exec();
+      const docs = await chatGroupInfo.find({ emails: emailAddress }).exec();
+
       if (docs.length > 0) {
         return docs;
       } else {
@@ -122,9 +124,22 @@ class Repository {
 
   async checkForExistingGroupMembers({ groupMembersInputValue }) {
     try {
-      const docs = await userRegisteration.find({
-        accounts: { $regex: groupMembersInputValue },
-      }).exec();
+      const searchValue =
+        typeof groupMembersInputValue === "string"
+          ? groupMembersInputValue
+          : "";
+      if (!searchValue.trim()) {
+        return "Invalid search value";
+      }
+
+      const docs = await userRegisteration
+        .find({
+          emails: {
+            $regex: new RegExp(`(^|\\b)${searchValue}`, "i"),
+          },
+        })
+        .limit(10)
+        .exec();
 
       if (docs.length > 0) {
         return docs;
@@ -175,7 +190,8 @@ class Repository {
   }
 
   // User Left group
-  async userLeftGroup({ groupKey, userAccountNo }) {
+  async userLeftGroup({ groupKey, email }) {
+    console.log("left the group inititated");
     try {
       // Find groups matching the groupKey
       const docs = await chatGroupInfo
@@ -185,11 +201,13 @@ class Repository {
       if (docs.length > 0) {
         for (const users of docs) {
           // If the user's account number matches, delete the user
-          if (users.accountNos === userAccountNo) {
-            const red = await chatGroupInfo.deleteOne({ accountNos: userAccountNo });
+          if (users.emails === email) {
+            const red = await chatGroupInfo.deleteOne({
+              emails: email,
+            });
 
             return {
-              userAccountNo,
+              email,
               message: `User left`,
               groupKey,
             };
@@ -201,7 +219,7 @@ class Repository {
               { uniqueGroupKeys: groupKey },
               {
                 $pull: {
-                  member: userAccountNo,
+                  member: email,
                 },
               }
             );
@@ -250,7 +268,9 @@ class Repository {
 
   async unknowReserve({ userAccountNo }) {
     try {
-      const docs = await chatGroupInfo.find({ accountNos: userAccountNo }).exec();
+      const docs = await chatGroupInfo
+        .find({ accountNos: userAccountNo })
+        .exec();
 
       if (docs.length > 0) {
         return docs;
@@ -263,4 +283,8 @@ class Repository {
   }
 }
 
-module.exports = new Repository(userRegisteration, groupsMessage, chatGroupInfo);
+module.exports = new Repository(
+  userRegisteration,
+  groupsMessage,
+  chatGroupInfo
+);
