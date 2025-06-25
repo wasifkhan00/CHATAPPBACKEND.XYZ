@@ -25,8 +25,7 @@ dotenv.config({ path: __dirname + "/.env" });
 
 const dbConnectionURI = process.env.DB_CONNECTION_STRING; //
 const corsOptions = {
-  // origin: "https://snaptext.netlify.app",
-  origin: "http://localhost:3000",
+  origin: "https://snaptext.netlify.app",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
